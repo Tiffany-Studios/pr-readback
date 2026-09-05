@@ -18,6 +18,19 @@ asking anyone else to adopt, it is worth living with. That means:
   review. An agent must not tick it — it is a statement about a human's own reading, and
   an agent ticking it makes the artifact a lie.
 
+## Opening a pull request from a fork
+
+You do not need any permission on this repository. Fork it, push a branch to your fork,
+and open a pull request — the ordinary path for any public repository. Nobody outside the
+maintainers can push to a branch here, and merging needs an approving review from someone
+with write access, so proposals are open and merges are not.
+
+**One thing that will look like broken CI, and is not.** Workflow runs on a fork pull
+request from a first-time contributor need a maintainer to click "Approve and run" before
+they start. Until someone does, the required checks have not reported and the pull request
+cannot merge. If your checks appear to be missing rather than failing, that is what has
+happened; say so on the pull request and a maintainer will click it.
+
 ## Tests
 
 ```bash
