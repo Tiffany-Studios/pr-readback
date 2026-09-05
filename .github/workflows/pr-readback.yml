@@ -1,0 +1,56 @@
+name: pr-readback
+
+# The reusable-workflow entry point, for repositories that would rather add one
+# `uses:` line than write out a job.
+#
+# The composite action at the root of this repository is the primary interface
+# and the one to reach for if you already have a job to hang a step on. This
+# wrapper exists because a reusable workflow needs no job of its own.
+#
+# Note that a reusable workflow call is named "caller / callee" in the checks
+# list, so the context name is two parts. If you are wiring this to a required
+# status check, use the composite action instead: a step keeps your job name,
+# and therefore your check name, under your control.
+
+on:
+  workflow_call:
+    inputs:
+      base-branch:
+        description: Apply the gate only to pull requests targeting this branch.
+        type: string
+        required: false
+        default: main
+      review-label:
+        description: Text identifying the self-attestation checkbox.
+        type: string
+        required: false
+        default: I have reviewed my own changes
+      attribution-labels:
+        description: Labels, one per line, of which exactly one must be ticked.
+        type: string
+        required: false
+        default: |
+          Human-authored
+          Agent-assisted
+          Agent-authored
+      guidance:
+        description: A sentence appended to any failure message.
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  readback:
+    name: readback
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Tiffany-Studios/pr-readback@v1
+        with:
+          base-branch: ${{ inputs.base-branch }}
+          review-label: ${{ inputs.review-label }}
+          attribution-labels: ${{ inputs.attribution-labels }}
+          guidance: ${{ inputs.guidance }}

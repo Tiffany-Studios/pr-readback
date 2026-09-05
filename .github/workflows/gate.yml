@@ -1,0 +1,34 @@
+name: gate
+
+# This repository uses its own action on itself. If the gate is worth asking
+# other people to adopt, it is worth living with.
+
+on:
+  pull_request:
+    types:
+      [
+        opened,
+        edited,
+        synchronize,
+        reopened,
+        ready_for_review,
+        converted_to_draft,
+      ]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  readback:
+    name: readback
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: ./
+        with:
+          base-branch: main
+          guidance: See README.md.

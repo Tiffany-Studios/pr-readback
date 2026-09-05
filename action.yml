@@ -1,0 +1,163 @@
+name: pr-readback
+
+# A readback gate for pull requests.
+#
+# In aviation and medicine a readback is the protocol where the receiver repeats
+# an instruction back to prove they understood it, not merely received it. This
+# action checks the pull request equivalent: an author's self-attestation that
+# they have read their own diff, coupled in both directions to the draft state.
+#
+# The coupling is the point. Ticked while still a draft fails, because the claim
+# is unfinished work presented as reviewed. Unticked once ready for review also
+# fails, because nobody has claimed to have read it. Either half alone is common;
+# both together are what this action packages.
+#
+# What this is not: a security control. A checkbox in a pull request body is an
+# attestation, and anyone with write access can tick it. The controls that bite
+# are GitHub refusing to merge a draft and a ruleset requiring an approving
+# review the author cannot give themselves. This makes the process legible and
+# catches the honest mistake.
+#
+# Prior art, credited rather than claimed. Author self-attestation is not novel:
+# kylecorry31/Trail-Sense has enforced "I have manually reviewed my code changes"
+# since 2026-08-22, and others do it independently. Enforcing "ready implies
+# ticked" is not novel either: treeseed-ai/agent did that, with a three-way
+# attribution taxonomy, from 2026-08-19. The lineage runs back to the Developer
+# Certificate of Origin.
+
+description: >-
+  Check a pull request's self-attestation against its draft state. Fails if the review
+  box is ticked while the pull request is still a draft, or unticked once it is ready
+  for review. Optionally requires exactly one attribution box.
+
+inputs:
+  base-branch:
+    description: >-
+      Apply the gate only to pull requests targeting this branch. Set to an empty string
+      to apply it to every base branch.
+    required: false
+    default: main
+  review-label:
+    description: >-
+      Text identifying the self-attestation checkbox in the pull request body. A list
+      item is considered ticked when it matches "- [x]" and then contains this text.
+    required: false
+    default: I have reviewed my own changes
+  attribution-labels:
+    description: >-
+      Labels, one per line or comma separated, of which exactly one must be ticked. Set
+      to an empty string to skip the attribution check entirely.
+    required: false
+    default: |
+      Human-authored
+      Agent-assisted
+      Agent-authored
+  guidance:
+    description: >-
+      A sentence appended to any failure message, pointing a reader at your own
+      contributor documentation.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: check attribution and review state
+      uses: actions/github-script@v9
+      env:
+        # Passed through the environment rather than interpolated into the
+        # script, so that caller-supplied text cannot be read as code.
+        READBACK_BASE_BRANCH: ${{ inputs.base-branch }}
+        READBACK_REVIEW_LABEL: ${{ inputs.review-label }}
+        READBACK_ATTRIBUTION_LABELS: ${{ inputs.attribution-labels }}
+        READBACK_GUIDANCE: ${{ inputs.guidance }}
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+
+          if (!pr) {
+            core.setFailed(
+              'pr-readback needs a pull request in the event payload. Trigger it ' +
+              'from a pull_request event.'
+            );
+            return;
+          }
+
+          const gatedBase = process.env.READBACK_BASE_BRANCH || '';
+          const base = pr.base.ref;
+
+          if (gatedBase && base !== gatedBase) {
+            core.info(
+              `Base branch is "${base}", not ${gatedBase}. No gate applied.`
+            );
+            return;
+          }
+
+          const body = pr.body || '';
+
+          // Labels are caller-supplied, so escape them before they reach a
+          // regular expression. A stray "(" would otherwise be a syntax error
+          // rather than a literal.
+          const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const checked = (label) =>
+            new RegExp(`^\\s*-\\s*\\[[xX]\\][^\\n]*${escape(label)}`, 'm').test(body);
+
+          const attributionLabels = (process.env.READBACK_ATTRIBUTION_LABELS || '')
+            .split(/[\n,]/)
+            .map((label) => label.trim())
+            .filter(Boolean);
+
+          const problems = [];
+          const attribution = attributionLabels.filter(checked);
+
+          if (attributionLabels.length) {
+            if (attribution.length === 0) {
+              problems.push(
+                'No attribution selected. Tick exactly one box in the ' +
+                'Attribution section.'
+              );
+            } else if (attribution.length > 1) {
+              problems.push(
+                `Multiple attribution boxes ticked (${attribution.join(', ')}). ` +
+                'Tick exactly one.'
+              );
+            }
+          }
+
+          const reviewLabel = process.env.READBACK_REVIEW_LABEL || '';
+          const reviewed = reviewLabel ? checked(reviewLabel) : false;
+
+          if (reviewLabel) {
+            if (pr.draft) {
+              core.info('Pull request is a draft. GitHub will not permit a merge.');
+              if (reviewed) {
+                problems.push(
+                  'The human review box is ticked on a draft. If a human has ' +
+                  'read the diff, promote the pull request to ready for review. ' +
+                  'If not, untick it.'
+                );
+              }
+            } else if (!reviewed) {
+              problems.push(
+                'This pull request is ready for review but the human review box ' +
+                'is not ticked. Agents must open pull requests as drafts and ' +
+                'leave that box alone; a human ticks it and promotes.'
+              );
+            }
+          }
+
+          const guidance = process.env.READBACK_GUIDANCE || '';
+
+          if (problems.length) {
+            core.setFailed(
+              'Pull request readback not satisfied:\n\n  - ' +
+              problems.join('\n  - ') +
+              (guidance ? `\n\n${guidance}` : '')
+            );
+            return;
+          }
+
+          core.info(
+            `Readback satisfied. Attribution: ${attribution[0] || 'not checked'}. ` +
+            `Draft: ${pr.draft}. Reviewed: ${reviewed}.`
+          );
