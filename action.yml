@@ -25,10 +25,9 @@ name: pr-readback
 # attribution taxonomy, from 2026-08-19. The lineage runs back to the Developer
 # Certificate of Origin.
 
-description: >-
-  Check a pull request's self-attestation against its draft state. Fails if the review
-  box is ticked while the pull request is still a draft, or unticked once it is ready
-  for review. Optionally requires exactly one attribution box.
+# Rendered on the Marketplace card. GitHub caps this at 125 characters and
+# rejects the listing above it, so keep it short — the detail lives in README.md.
+description: Couples an author's self-review checkbox to the pull request's draft state, in both directions. Zero dependencies.
 
 # Required by GitHub to list this action on the Marketplace: one Feather icon
 # name and one of eight permitted colours. This is listing metadata, not a

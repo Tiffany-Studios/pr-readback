@@ -18,6 +18,38 @@ Optionally it also requires exactly one attribution box — who or what wrote th
 Zero dependencies. One file. It reads the pull request body out of the event payload and
 never calls the API.
 
+## Why a team would want this
+
+Teams are working out what to do with agent-authored changes, and the question underneath
+is accountability rather than code quality.
+
+**An agent cannot be the accountable party.** If a change ships a secret, exposes personal
+data, or takes production down, a person answers for it. That does not change because the
+diff was generated, and no responsibility model — RACI or otherwise — has a slot for a
+tool in the accountable seat.
+
+This action does not verify that anyone read anything. It cannot, and the section below
+says so plainly. What it does is make the expectation explicit and enforce its shape in
+the open:
+
+- **The norm is written down**, in the repository, where anyone can see what this team
+  expects of itself.
+- **CI checks it**, so the claim is dated and attached to a commit rather than remembered.
+- **Departing from it becomes a visible act.** Someone who ticks the box without reading
+  has chosen to step outside a stated norm. That is a different thing from doing something
+  the team never specified.
+
+The last point is the substance. Most teams' review expectations live in somebody's head,
+an onboarding document, or a page nobody reopens. This puts them in the pipeline, in
+public, with receipts.
+
+None of it is mandatory. It is opt-in per repository, and a team that would rather
+auto-approve everything still can — it just cannot later claim it did otherwise.
+
+Related: [GitHub community discussion #197170](https://github.com/orgs/community/discussions/197170)
+asks for author self-approval controls because a regulator mandates two human reviewers
+and an AI-authored pull request cannot count its own author.
+
 ## Why "readback"
 
 In aviation and medicine, a **readback** is the protocol where the receiver repeats an
