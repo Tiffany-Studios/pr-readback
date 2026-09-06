@@ -1,5 +1,8 @@
 # pr-readback
 
+[![test](https://github.com/Tiffany-Studios/pr-readback/actions/workflows/test.yml/badge.svg)](https://github.com/Tiffany-Studios/pr-readback/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A pull request gate for the claim "I have read my own diff."
 
 The author ticks a box saying they reviewed their own changes. This action checks that
