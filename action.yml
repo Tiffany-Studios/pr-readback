@@ -30,6 +30,14 @@ description: >-
   box is ticked while the pull request is still a draft, or unticked once it is ready
   for review. Optionally requires exactly one attribution box.
 
+# Required by GitHub to list this action on the Marketplace: one Feather icon
+# name and one of eight permitted colours. This is listing metadata, not a
+# brand asset — deliberately so. A check-square because the thing being
+# verified is, literally, a checkbox.
+branding:
+  icon: check-square
+  color: blue
+
 inputs:
   base-branch:
     description: >-
